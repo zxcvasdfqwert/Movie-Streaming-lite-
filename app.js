@@ -1121,19 +1121,19 @@ function setupStarRating(type, id, existingRating = null) {
 
   if (deleteBtn) {
     deleteBtn.onclick = async () => {
-        const authParam = sessionId
-        ?`session_id=${sessionId}`
-        :`guest_session_id=${guestSessionId}`;
+      const authParam = sessionId
+      ?`session_id=${sessionId}`
+      :`guest_session_id=${guestSessionId}`;
 
-        const url = `${BASE_URL}/${type}/${id}/rating?api_key=${API_KEY}&${authParam}`;
+      const url = `${BASE_URL}/${type}/${id}/rating?api_key=${API_KEY}&${authParam}`;
 
-        const res = await fetch(url, {method: "DELETE"});
-        const data = await res.json();
+      const res = await fetch(url, {method: "DELETE"});
+      const data = await res.json();
 
-        if (data.success) {
-          selected = 0;
-          updateUI();
-          showToast("Rating removed", "info");
+      if (data.success) {
+        selected = 0;
+        updateUI();
+        showToast("Rating removed", "info");
       }
     };
   }
@@ -1161,7 +1161,6 @@ if (providers.length === 0) {
     `;
   });
 }
-
 
 // render cast
 castSection.innerHTML = "";
