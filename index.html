@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie StreamLite</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Stream Movies & Tv Shows</h1>
+        <nav>
+            <button id="btnSearch">🔍︎ Search</button>
+            <button id="btnMovies">Movies</button>
+            <button id="btnTv">TV Shows</button>
+            <button id="btnFavs">Favorites</button>
+            <button id="btnList">Watchlist</button>
+            <button id="btnRated">Rated</button>
+            <button id="btnLogin">Login</button>
+            <button id="btnLogout" class="hidden">Logout</button>
+        </nav>
+    </header> 
+
+    <div id="toast-container"></div>
+
+    <main>
+        <section id="movie-section">
+            <div class="controls">
+                <select id="movieGenreSelect" 
+                    class="genre-select">
+                    <option value="">All Genres</option>
+                </select>
+            </div>
+            <div class="grid index-grid" id="movieGrid"></div>
+        </section>
+
+        <section id="tv-section" class="hidden">
+            <div class="controls">
+                <select id="tvGenreSelect" 
+                    class="genre-select">
+                    <option value="">All Genres</option>
+                </select>
+            </div>
+            <div class="grid index-grid" id="tvGrid"></div>
+        </section>
+
+        <section id="fav-section" class="grid index-grid hidden"></section>
+
+        <section id="list-section" class="grid index-grid hidden"></section> 
+
+        <section id="rated-section" class="grid index-grid hidden"></section>
+
+        <section id="search-section" class="hidden">
+            <div id="search-wrapper">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="🔍︎ Search for movies or TV shows...">
+                <ul id="suggestions-list"></ul>
+            </div>
+            <div id="search-results"></div>
+        </section>
+        
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
