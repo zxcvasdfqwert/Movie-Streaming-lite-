@@ -1150,7 +1150,7 @@ setupStarRating(type, movieId, accountState?.rating ?? 0);
 streamingSection.innerHTML="";
 const providers = streaming?.flatrate || streaming?.buy || streaming?.rent || [];
 if (providers.length === 0) {
-  streamingSection.innerHTML = "<p>No platforms streaming it</p>";
+  streamingSection.innerHTML = "<p>No platform's streaming this in your region</p>";
 } else {
   providers.slice(0,10).forEach(p => {
     streamingSection.innerHTML += `
