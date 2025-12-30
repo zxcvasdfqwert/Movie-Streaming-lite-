@@ -9,6 +9,14 @@ const options = {
   }
 }; 
 
+let currentPage = 1;
+let totalPages = 1;
+let currentSection = "movies";
+let currentGenre = null;
+let selectedMovieGenres = null;
+let moviePage = 1;
+
+
 function showToast(message, type="info") {
   const container = document.getElementById("toast-container");
   if (!container) return;
@@ -198,8 +206,8 @@ const tvGrid = document.getElementById("tvGrid");
 
 
 //fetch movies
-async function fetchPopular() {
-  const url = `${BASE_URL}/movie/popular?api_key=${API_KEY}`;
+async function fetchPopular(page = 1) {
+  const url = `${BASE_URL}/movie/popular?api_key=${API_KEY}&page=${page}`;
   console.log("Fetching movies:", url);
 
   const res = await fetch(url, options);
@@ -209,12 +217,14 @@ async function fetchPopular() {
     return null;
   }
   const data = await res.json();
+
+  totalPages = data.total_pages;
   return data.results;
 } 
 
 //fetch tv 
-async function fetchPopularTv() {
-    const url = `${BASE_URL}/tv/popular?api_key=${API_KEY}`; 
+async function fetchPopularTv(page = 1) {
+    const url = `${BASE_URL}/tv/popular?api_key=${API_KEY}&page=${page}`; 
     console.log("Fetching TV shows:",url);
 
     const res = await fetch(url, options);
@@ -223,7 +233,9 @@ async function fetchPopularTv() {
         console.error("TV Api error:",res.status);
         return null;
     }
-    const data = await res.json();   
+    const data = await res.json(); 
+
+    totalPages = data.total_pages;
     return data.results;
 } 
 
@@ -246,19 +258,31 @@ async function fetchTvGenres() {
 }
 
 //setup Movie genre
-async function setupMovieGenres(){
-const select = document.getElementById("movieGenreSelect");
-if (!select) return;
+async function setupMovieGenres() {
+  const select = document.getElementById("movieGenreSelect");
+  if (!select) return;
 
-const genres = await fetchMovieGenres();
+  const genres = await fetchMovieGenres();
 
-genres.forEach(g => {
-  const option = document.createElement("option");
-  option.value = g.id;
-  option.textContent = g.name;
-  select.appendChild(option);
-});
+  genres.forEach(g => {
+    const option = document.createElement("option");
+    option.value = g.id;
+    option.textContent = g.name;
+    select.appendChild(option);
+  });
+
+  select.value = currentGenre || "";
+
+  select.addEventListener("change", async (e) => {
+    currentGenre = e.target.value || null;
+    localStorage.setItem("currentGenre", currentGenre);
+    currentSection = "movies";
+    // currentPage = 1; 
+
+    await loadCurrentSection();
+  });
 }
+
 
 //setup Tv genre
 async function setupTvGenres() {
@@ -273,44 +297,67 @@ async function setupTvGenres() {
     option.textContent = g.name;
     select.appendChild(option);
   });
+
+  select.value = currentGenre || "";
+
+  select.addEventListener("change", async (e) => {
+    currentGenre = e.target.value || null;
+    localStorage.setItem("currentGenre", currentGenre);
+    currentSection = "tv";
+    // currentPage = 1;
+
+    await loadCurrentSection();
+  })
 }
 
 
 //fetching movies by genre 
-async function fetchMoviesByGenres(genreId) {
+async function fetchMoviesByGenres(genreId, page = 1) {
   const url = genreId
-  ? `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=${genreId}`
-  :`${BASE_URL}/movie/popular?api_key=${API_KEY}`;
+  ? `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=${genreId}&page=${page}`
+  :`${BASE_URL}/movie/popular?api_key=${API_KEY}&page=${page}`;
 
   const res = await fetch(url);
   const data = await res.json();
+
+  totalPages = data.total_pages;
   return data.results || [];
 }
 
 //fetching tv by genres
-async function fetchTvByGenres(genreId) {
+async function fetchTvByGenres(genreId, page = 1) {
   const url = genreId
-  ? `${BASE_URL}/discover/tv?api_key=${API_KEY}&with_genres=${genreId}`
-  :`${BASE_URL}/tv/popular?api_key=${API_KEY}`;
+  ? `${BASE_URL}/discover/tv?api_key=${API_KEY}&with_genres=${genreId}&page=${page}`
+  :`${BASE_URL}/tv/popular?api_key=${API_KEY}&page=${page}`;
 
   const res = await fetch(url);
   const data = await res.json();
 
+  totalPages = data.total_pages;
   return data.results || [];
 } 
 
 //movie dropdown 
-document.getElementById("movieGenreSelect")?.addEventListener("change", async(e) => {
-  const genreId = e.target.value;
-  const movies = await fetchMoviesByGenres(genreId);
-  renderItems(movies, document.getElementById("movieGrid"), "movie");
+document.getElementById("movieGenreSelect")?.addEventListener("change", async (e) => {
+  currentGenre = e.target.value || null;
+  currentSection = "movies";
+  // currentPage = 1;
+
+  const movies = await fetchMoviesByGenres(currentGenre, currentPage);
+  renderItems(movies, movieGrid, "movie");
+  updatePagination();
 });
+
 
 //tv dropdown
 document.getElementById("tvGenreSelect")?.addEventListener("change", async(e) => {
-  const genreId = e.target.value;
-  const shows = await fetchTvByGenres(genreId)
-  renderItems(shows, document.getElementById("tvGrid"), "tv");
+  currentGenre = e.target.value || null;
+  currentSection = "tv";
+  // currentPage = 1;
+
+  const tv = await fetchTvByGenres(currentGenre, currentPage);
+  renderItems(tv, tvGrid, "tv");
+  updatePagination();
 });
 
 //search function
@@ -432,6 +479,52 @@ if (searchInput && suggestionsList) {
       suggestionsList.style.display = "none";
     }, 200);
   });
+}
+
+
+function updatePagination() {
+  const pagination = document.getElementById("pagination");
+  const pageInfo = document.getElementById("pageInfo");
+  const prevBtn = document.getElementById("prevPage");
+  const nextBtn = document.getElementById("nextPage"); 
+
+  if (!pagination) return;
+
+  if (currentSection === "movies" || currentSection === "tv") {
+    pagination.classList.remove("hidden");
+  } else {
+    pagination.classList.add("hidden");
+    return;
+  }
+
+
+  pageInfo.textContent= `Page ${currentPage} of ${totalPages}`;
+
+  prevBtn.disabled = currentPage <= 1;
+  nextBtn.disabled = currentPage >= totalPages;
+}
+
+const prevBtn = document.getElementById("prevPage");
+const nextBtn = document.getElementById("nextPage");
+
+if (prevBtn && nextBtn) {
+ prevBtn.onclick = async () => {
+  if (currentSection !== "movies" && currentSection !== "tv") return;
+  if (currentPage > 1) {
+    currentPage--;
+    await loadCurrentSection();
+  }
+}; 
+
+localStorage.setItem("currentPage", currentPage);
+
+nextBtn.onclick = async () => {
+  if (currentSection !== "movies" && currentSection !== "tv") return;
+  if (currentPage < totalPages) {
+    currentPage++;
+    await loadCurrentSection();
+  }
+};
 }
 
 //rendering items 
@@ -582,7 +675,13 @@ async function fetchRatedlist() {
 
 if (isIndexPage) { 
 
-    const saved = localStorage.getItem("activeSection");
+    const saved = localStorage.getItem("activeSection"); 
+
+    const savedPage = Number(localStorage.getItem("currentPage")) || 1;
+    const savedGenre = localStorage.getItem("currentGenre");
+
+    currentPage = savedPage;
+    currentGenre = savedGenre ? Number(savedGenre) : null;
 
     if (saved) {
       switch (saved) {
@@ -649,13 +748,20 @@ if (isIndexPage) {
     //  }
    }
 
-    fetchPopular().then(movies => {
-        if (movies) renderItems(movies, movieGrid, "movie");
-    }); 
+    const savedSection = localStorage.getItem("activeSection") || "movies";
 
-    fetchPopularTv().then(shows => {
-        if (shows) renderItems(shows, tvGrid, "tv");
-    });   
+    (async () => {
+        if (savedSection === "movies") {
+            currentSection = "movies";
+            await loadCurrentSection();
+        }
+
+        if (savedSection === "tv") {
+            currentSection = "tv";
+            await loadCurrentSection();
+        }
+    })();
+  
 
     function setActiveNav(buttonId) {
       const navButtons = document.querySelectorAll("nav button");
@@ -665,16 +771,22 @@ if (isIndexPage) {
       if (activeBtn) activeBtn.classList.add("active");
     }
 
-    document.getElementById("btnMovies").onclick = () => {
+    document.getElementById("btnMovies").onclick = async () => {
       localStorage.setItem("activeSection", "movies");
+      currentSection = "movies";
+      // currentPage = 1;
       showSection("movie-section");
       setActiveNav("btnMovies");
+      await loadCurrentSection();
     };
 
-    document.getElementById("btnTv").onclick = () => {
+    document.getElementById("btnTv").onclick = async () => {
       localStorage.setItem("activeSection", "tv");
+      currentSection = "tv";
+      // currentPage = 1;
       showSection("tv-section");
       setActiveNav("btnTv");
+      await loadCurrentSection();
     };
 
     document.getElementById("btnFavs").onclick = async () => {
@@ -772,6 +884,46 @@ function showSection(sectionId) {
   }
 }
 
+async function loadCurrentSection() {
+  let data = [];
+
+  switch (currentSection) {
+    case "movies":
+      data = currentGenre
+      ? await fetchMoviesByGenres(currentGenre, currentPage)
+      : await fetchPopular(currentPage);
+      renderItems(data, movieGrid, "movie");
+      break;
+
+    case "tv":
+      data = currentGenre
+        ? await fetchTvByGenres(currentGenre, currentPage)
+        : await fetchPopularTv(currentPage);
+      renderItems(data, tvGrid, "tv");
+      break;
+
+    case "favorites":
+      data = await fetchFavorites();
+      totalPages = 1;
+      renderItems(data, document.getElementById("fav-section"));
+      break;
+
+    case "watchlist":
+      data = await fetchWatchlist();
+      totalPages = 1;
+      renderItems(data, document.getElementById("list-section"));
+      break;
+
+    case "ratedlist":
+      data = await fetchRatedlist();
+      totalPages = 1;
+      renderItems(data, document.getElementById("rated-section"));
+      break;
+  }
+
+  updatePagination();
+}
+ 
 
 //details secton..
 if (isDetailsPage){
@@ -1161,7 +1313,6 @@ if (providers.length === 0) {
 }
 
 // render cast
-
 const castSlider = document.getElementById("cast-slider");
 castSlider.innerHTML = "";
 
@@ -1220,7 +1371,7 @@ related.results?.forEach(r => {
 });
   
 
-  const userRating = await fetchAccountStates(type, movieId);
+ const userRating = await fetchAccountStates(type, movieId);
   
 } 
 
