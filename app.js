@@ -277,7 +277,10 @@ async function setupMovieGenres() {
     currentGenre = e.target.value || null;
     localStorage.setItem("currentGenre", currentGenre);
     currentSection = "movies";
-    // currentPage = 1; 
+    currentPage = 1;  
+
+    localStorage.setItem("currentPage", 1);
+    localStorage.setItem("currentGenre", currentGenre);
 
     await loadCurrentSection();
   });
@@ -772,18 +775,28 @@ if (isIndexPage) {
     }
 
     document.getElementById("btnMovies").onclick = async () => {
-      localStorage.setItem("activeSection", "movies");
       currentSection = "movies";
-      // currentPage = 1;
+      currentPage = 1;
+      currentGenre = null;
+
+      localStorage.setItem("activeSection", "movies");
+      localStorage.setItem("currentPage", 1);
+      localStorage.removeItem("currentGenre");
+
       showSection("movie-section");
       setActiveNav("btnMovies");
       await loadCurrentSection();
     };
 
     document.getElementById("btnTv").onclick = async () => {
-      localStorage.setItem("activeSection", "tv");
       currentSection = "tv";
-      // currentPage = 1;
+      currentPage = 1;
+      currentGenre = null;
+
+      localStorage.setItem("activeSection", "tv");
+      localStorage.setItem("currentPage", 1);
+      localStorage.removeItem("currentGenre");
+      
       showSection("tv-section");
       setActiveNav("btnTv");
       await loadCurrentSection();
