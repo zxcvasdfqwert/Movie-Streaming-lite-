@@ -784,10 +784,8 @@ console.log("type =", type);
 
 const detailsContainer = document.getElementById("details-container");
 const streamingSection = document.getElementById("streaming-section");
-const castSection = document.getElementById("cast-section");
 // const reviewSection = document.getElementById("review-section");
 const imgSection = document.getElementById("img-section");
-const relatedSection = document.getElementById("related-section");
 
 // fetching functions
 async function fetchDetails(type, id) {
@@ -1163,16 +1161,21 @@ if (providers.length === 0) {
 }
 
 // render cast
-castSection.innerHTML = "";
-  cast.cast?.slice(0, 12).forEach(actor => {
-    castSection.innerHTML += `
-      <div class="cast-card">
-        <img src="${API_IMG + actor.profile_path}">
-        <p>${actor.name}</p>
-        <span>${actor.character}</span>
-      </div>
-    `;
-  });
+castSection.innerHTML = `
+  <div class="slider" id="cast-slider"></div>
+`;
+
+const castSlider = document.getElementById("cast-slider");
+
+cast.cast?.slice(0, 20).forEach(actor => {
+  castSlider.innerHTML += `
+    <div class="cast-card">
+      <img src="${API_IMG + actor.profile_path}">
+      <p>${actor.name}</p>
+      <span>${actor.character}</span>
+    </div>
+  `;
+});
 
 // render reviews 
 //   reviewSection.innerHTML = "";
@@ -1206,21 +1209,38 @@ castSection.innerHTML = "";
 console.log("Images Response:", images);
 
   // render related
-  relatedSection.innerHTML = "";
-  related.results?.forEach(r => {
-    relatedSection.innerHTML += `
+  relatedSection.innerHTML = `
+  <div class="slider" id="related-slider"></div>
+`;
+
+const relatedSlider = document.getElementById("related-slider");
+
+related.results?.forEach(r => {
+  relatedSection.innerHTML += `
     <div class="card" onclick="location.href='details.html?id=${r.id}&type=${type}'">
-        <img src="${API_IMG + r.poster_path}">
-        <div class="card-title">${r.title ||      
-          r.name}
-        </div>
+      <img src="${API_IMG + r.poster_path}">
+      <div class="card-title">${r.title || r.name}</div>
     </div>
-    `;
-  });  
+  `;
+});
+  
 
   const userRating = await fetchAccountStates(type, movieId);
   
 } 
+
+document.querySelectorAll(".slide-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const slider = document.getElementById(btn.dataset.target);
+    const scrollAmount = 300;
+
+    if (btn.classList.contains("left")) {
+      slider.scrollLeft -= scrollAmount;
+    } else {
+      slider.scrollLeft += scrollAmount;
+    }
+  });
+});
 
 render(); 
 
