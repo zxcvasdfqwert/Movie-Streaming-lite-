@@ -1161,11 +1161,9 @@ if (providers.length === 0) {
 }
 
 // render cast
-castSection.innerHTML = `
-  <div class="slider" id="cast-slider"></div>
-`;
 
 const castSlider = document.getElementById("cast-slider");
+castSlider.innerHTML = "";
 
 cast.cast?.slice(0, 20).forEach(actor => {
   castSlider.innerHTML += `
@@ -1209,14 +1207,11 @@ cast.cast?.slice(0, 20).forEach(actor => {
 console.log("Images Response:", images);
 
   // render related
-  relatedSection.innerHTML = `
-  <div class="slider" id="related-slider"></div>
-`;
-
-const relatedSlider = document.getElementById("related-slider");
+  const relatedSlider = document.getElementById("related-slider");
+  relatedSlider.innerHTML = "";
 
 related.results?.forEach(r => {
-  relatedSection.innerHTML += `
+  relatedSlider.innerHTML += `
     <div class="card" onclick="location.href='details.html?id=${r.id}&type=${type}'">
       <img src="${API_IMG + r.poster_path}">
       <div class="card-title">${r.title || r.name}</div>
