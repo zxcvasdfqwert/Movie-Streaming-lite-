@@ -15,7 +15,7 @@ let currentSection = "movies";
 let currentGenre = null;
 let selectedMovieGenres = null;
 let moviePage = 1;
-const ITEMS_PER_PAGE = 24;
+// const ITEMS_PER_PAGE = 20;
 
 function showToast(message, type="info") {
   const container = document.getElementById("toast-container");
@@ -487,6 +487,12 @@ if (searchInput && suggestionsList) {
   });
 }
 
+// function paginateArray(items, page) {
+//   const start = (page - 1) * ITEMS_PER_PAGE;
+//   const end = start + ITEMS_PER_PAGE;
+//   return items.slice(start, end);
+// }
+
 
 function updatePagination() {
   const pagination = document.getElementById("pagination");
@@ -523,7 +529,6 @@ if (prevBtn && nextBtn) {
     await loadCurrentSection();
   }
 }; 
-
 
 nextBtn.onclick = async () => {
   if (currentSection !== "movies" && currentSection !== "tv") return;
@@ -562,7 +567,9 @@ function renderItems(list, container, type = "movies") {
       `;
 
       card.onclick = () => {
-        window.location.href = `details.html?id=${item.id}&type=${mediaType}`;
+        const newUrl = `details/${mediaType}/${item.id}`;
+        sessionStorage.setItem("detailsRoute", newUrl);
+        window.location.href = "details.html";
       };
 
       container.appendChild(card);
@@ -762,13 +769,13 @@ if (isIndexPage) {
 
     (async () => {
         if (savedSection === "movies") {
-            currentSection = "movies";
-            await loadCurrentSection();
+          currentSection = "movies";
+          await loadCurrentSection();
         }
 
         if (savedSection === "tv") {
-            currentSection = "tv";
-            await loadCurrentSection();
+          currentSection = "tv";
+          await loadCurrentSection();
         }
     })();
   
@@ -810,6 +817,7 @@ if (isIndexPage) {
     };
 
     document.getElementById("btnFavs").onclick = async () => {
+        currentSection = "favorites"
         currentPage = 1;
         localStorage.setItem("activeSection", "favorites");
         showSection("fav-section");
@@ -821,6 +829,7 @@ if (isIndexPage) {
     }; 
 
     document.getElementById("btnList").onclick = async () => {
+      currentSection = "watchList"
       currentPage = 1;
       localStorage.setItem("activeSection", "watchlist");
       showSection("list-section");
@@ -832,6 +841,7 @@ if (isIndexPage) {
     };  
 
     document.getElementById("btnRated").onclick = async () => {
+      currentSection = "ratedList"
       currentPage = 1;
       localStorage.setItem("activeSection", "ratedlist");
       showSection("rated-section");
@@ -947,12 +957,33 @@ async function loadCurrentSection() {
 
 //details secton..
 if (isDetailsPage){
-const params = new URLSearchParams(window.location.search);
-const movieId = params.get("id");
-const type = params.get("type");
 
-console.log("movieId =", movieId);
-console.log("type =", type);
+  if (location.pathname.endsWith("details.html")) {
+    const route = sessionStorage.getItem("detailsRoute");
+
+    if (route) {
+      history.replaceState({}, "", route);
+      sessionStorage.removeItem("detailsRoute");
+    }
+  }
+
+  let movieId = null;
+  let type = null;
+
+  const pathParts = window.location.pathname.split("/");
+
+  if (pathParts.length >= 4 && pathParts[1] === "details") {
+    type = pathParts[2];
+    movieId = pathParts[3];
+  }
+
+  if (!movieId || !type) {
+    const params = new URLSearchParams(window.location.search);
+    movieId = params.get("id");
+    type = params.get("type");
+  }
+
+  console.log("Parsed:", { movieId, type });
 
 const detailsContainer = document.getElementById("details-container");
 const streamingSection = document.getElementById("streaming-section");
