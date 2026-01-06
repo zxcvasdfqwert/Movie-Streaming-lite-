@@ -567,8 +567,13 @@ function renderItems(list, container, type = "movies") {
       `;
 
       card.onclick = () => {
-        const newUrl = `details/${mediaType}/${item.id}`;
-        sessionStorage.setItem("detailsRoute", newUrl);
+        sessionStorage.setItem(
+          "detailsData",
+          JSON.stringify({
+            id: item.id,
+            type: mediaType
+          })
+        );
         window.location.href = "details.html";
       };
 
@@ -957,33 +962,61 @@ async function loadCurrentSection() {
 
 //details secton..
 if (isDetailsPage){
+  initDetailsPage();
+} 
 
-  if (location.pathname.endsWith("details.html")) {
-    const route = sessionStorage.getItem("detailsRoute");
+async function initDetailsPage() { 
 
-    if (route) {
-      history.replaceState({}, "", route);
-      sessionStorage.removeItem("detailsRoute");
-    }
+const detailsContainer = document.getElementById("details-container");
+if (detailsContainer) {
+  detailsContainer.innerHTML = "";
+}
+
+let movieId = null;
+let type = null;
+
+const hash = window.location.hash.substring(1);
+console.log("=== DETAILS PAGE LOADED ===");
+console.log("Hash:", hash);
+
+if (hash) {
+  const parts = hash.split("/").filter(Boolean);
+  console.log("Hash parts:", parts);
+
+  if (parts.length >= 2) {
+    type = parts[0];
+    movieId = parts[1];
   }
+}
 
-  let movieId = null;
-  let type = null;
+console.log("Parsed:", { movieId, type });
+  
+if (!movieId || !type) {
+  const match = window.location.pathname.match(
+    /^\/details\/(movie|tv)\/(\d+)$/
+  );
 
-  const pathParts = window.location.pathname.split("/");
-
-  if (pathParts.length >= 4 && pathParts[1] === "details") {
-    type = pathParts[2];
-    movieId = pathParts[3];
+  if (match) {
+    type = match[1];
+    movieId = match[2];
   }
+}
 
-  if (!movieId || !type) {
-    const params = new URLSearchParams(window.location.search);
-    movieId = params.get("id");
-    type = params.get("type");
-  }
+if (!movieId || !type) {
+  const params = new URLSearchParams(window.location.search);
+  movieId = params.get("id");
+  type = params.get("type");
+}
 
-  console.log("Parsed:", { movieId, type });
+console.log("Parsed:", { movieId, type });
+
+if (!movieId || !type) {
+  console.error("Missing movieId or type in URL");
+  alert ("No Movie/Show data found. Redirecting to home.....");
+  window.location.href="imdex.html";
+  return;
+}
+
 
 const detailsContainer = document.getElementById("details-container");
 const streamingSection = document.getElementById("streaming-section");
@@ -1409,18 +1442,31 @@ cast.cast?.slice(0, 20).forEach(actor => {
 console.log("Images Response:", images);
 
   // render related
-  const relatedSlider = document.getElementById("related-slider");
-  relatedSlider.innerHTML = "";
+   const relatedSlider = document.getElementById("related-slider");
+    relatedSlider.innerHTML = "";
 
-related.results?.forEach(r => {
-  relatedSlider.innerHTML += `
-    <div class="card" onclick="location.href='details.html?id=${r.id}&type=${type}'">
-      <img src="${API_IMG + r.poster_path}">
-      <div class="card-title">${r.title || r.name}</div>
-    </div>
-  `;
-});
-  
+    if (related.results && related.results.length > 0) {
+      related.results.forEach(r => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.style.cursor = "pointer";
+        card.innerHTML = `
+        <img src="${API_IMG + r.poster_path}" alt="${r.title || r.name}">
+        <div class="card-title">${r.title || r.name}</div>
+        `;
+        
+        card.onclick = () => {
+          const newType = type;
+          const newId = r.id;
+
+          window.location.hash = `#/${newType}/${newId}`;
+        };
+        
+        relatedSlider.appendChild(card);
+      });
+    } else {
+      relatedSlider.innerHTML = "<p>No Related Content Available</p>";
+    }
 
  const userRating = await fetchAccountStates(type, movieId);
   
