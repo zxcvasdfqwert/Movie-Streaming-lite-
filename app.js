@@ -567,14 +567,8 @@ function renderItems(list, container, type = "movies") {
       `;
 
       card.onclick = () => {
-        sessionStorage.setItem(
-          "detailsData",
-          JSON.stringify({
-            id: item.id,
-            type: mediaType
-          })
-        );
-        window.location.href = "details.html";
+        
+        window.location.href = `details.html#/${mediaType}/${item.id}`;
       };
 
       container.appendChild(card);
@@ -989,24 +983,24 @@ if (hash) {
   }
 }
 
-console.log("Parsed:", { movieId, type });
+// console.log("Parsed:", { movieId, type });
   
-if (!movieId || !type) {
-  const match = window.location.pathname.match(
-    /^\/details\/(movie|tv)\/(\d+)$/
-  );
+// if (!movieId || !type) {
+//   const match = window.location.pathname.match(
+//     /^\/details\/(movie|tv)\/(\d+)$/
+//   );
 
-  if (match) {
-    type = match[1];
-    movieId = match[2];
-  }
-}
+//   if (match) {
+//     type = match[1];
+//     movieId = match[2];
+//   }
+// }
 
-if (!movieId || !type) {
-  const params = new URLSearchParams(window.location.search);
-  movieId = params.get("id");
-  type = params.get("type");
-}
+// if (!movieId || !type) {
+//   const params = new URLSearchParams(window.location.search);
+//   movieId = params.get("id");
+//   type = params.get("type");
+// }
 
 console.log("Parsed:", { movieId, type });
 
@@ -1018,7 +1012,7 @@ if (!movieId || !type) {
 }
 
 
-const detailsContainer = document.getElementById("details-container");
+// const detailsContainer = document.getElementById("details-container");
 const streamingSection = document.getElementById("streaming-section");
 // const reviewSection = document.getElementById("review-section");
 const imgSection = document.getElementById("img-section");
@@ -1114,7 +1108,9 @@ async function render() {
   if (!movieId || !type) {
     console.error("Missing movieId or type in URl");
     return ;
-  }
+  } 
+
+  window.scrollTo({ top:0, behavior: "smooth" });
 
   const details = await fetchDetails(type, movieId);
   const streaming = await fetchPlatforms(type, movieId);
@@ -1484,7 +1480,11 @@ document.querySelectorAll(".slide-btn").forEach(btn => {
     }
   });
 });
-
-render(); 
-
+ render();
 }
+window.addEventListener("hashchange", () => {
+  if (document.getElementById("details-container")) {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    initDetailsPage();
+  }
+});
