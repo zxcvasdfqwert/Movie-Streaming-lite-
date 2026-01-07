@@ -12,7 +12,8 @@ const options = {
 let currentPage = 1;
 let totalPages = 1;
 let currentSection = "movies";
-let currentGenre = null;
+let movieGenreId = null;
+let tvGenreId = null;
 let selectedMovieGenres = null;
 let moviePage = 1;
 // const ITEMS_PER_PAGE = 20;
@@ -343,29 +344,6 @@ async function fetchTvByGenres(genreId, page = 1) {
   return data.results || [];
 } 
 
-//movie dropdown 
-document.getElementById("movieGenreSelect")?.addEventListener("change", async (e) => {
-  currentGenre = e.target.value || null;
-  currentSection = "movies";
-  // currentPage = 1;
-
-  const movies = await fetchMoviesByGenres(currentGenre, currentPage);
-  renderItems(movies, movieGrid, "movie");
-  updatePagination();
-});
-
-
-//tv dropdown
-document.getElementById("tvGenreSelect")?.addEventListener("change", async(e) => {
-  currentGenre = e.target.value || null;
-  currentSection = "tv";
-  // currentPage = 1;
-
-  const tv = await fetchTvByGenres(currentGenre, currentPage);
-  renderItems(tv, tvGrid, "tv");
-  updatePagination();
-});
-
 //search function
 async function fetchSearch(query) {
   const url =`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}`;
@@ -508,8 +486,9 @@ function updatePagination() {
   pagination.classList.remove("hidden");
 } else {
   pagination.classList.add("hidden");
-}
+} 
 
+  window.scrollTo({ top:0, behavior: "smooth" });
 
   pageInfo.textContent= `Page ${currentPage} of ${totalPages}`;
 
@@ -522,7 +501,6 @@ const nextBtn = document.getElementById("nextPage");
 
 if (prevBtn && nextBtn) {
  prevBtn.onclick = async () => {
-  if (currentSection !== "movies" && currentSection !== "tv") return;
   if (currentPage > 1) {
     currentPage--;
     localStorage.setItem("currentPage", currentPage);
@@ -531,7 +509,6 @@ if (prevBtn && nextBtn) {
 }; 
 
 nextBtn.onclick = async () => {
-  if (currentSection !== "movies" && currentSection !== "tv") return;
   if (currentPage < totalPages) {
     currentPage++;
     localStorage.setItem("currentPage", currentPage);
@@ -660,6 +637,11 @@ async function fetchRatedlist(page =1) {
     const dataMovies = await resMovies.json();
     const dataTv = await resTv.json();
 
+     totalPages = Math.max(
+      dataMovies.total_pages || 1,
+      dataTv.total_pages || 1   
+    );
+
     return [
       ...(dataMovies.results || []).map(m => ({ ...m, media_type: "movie" })),
       ...(dataTv.results || []).map(t => ({ ...t, media_type: "tv" }))
@@ -679,6 +661,11 @@ async function fetchRatedlist(page =1) {
 
     const dataMovies = await resMovies.json();
     const dataTv = await resTv.json();
+
+    totalPages = Math.max(
+      dataMovies.total_pages || 1,
+      dataTv.total_pages || 1   
+    );
 
     return [
       ...(dataMovies.results || []).map(m => ({ ...m, media_type: "movie" })),
@@ -727,8 +714,8 @@ if (isIndexPage) {
        (async () => {
         const favSection = document.getElementById("fav-section");
          if (favSection) {
-          const favorites = await fetchFavorites();
-          renderItems(favorites, favSection);
+          currentSection = saved;
+          await loadCurrentSection();
         }
        })();
      }
@@ -737,8 +724,8 @@ if (isIndexPage) {
        (async () => {
          const listSection = document.getElementById("list-section");
          if (listSection) {
-           const listItems = await fetchWatchlist();
-           renderItems(listItems, listSection);
+           currentSection = saved;
+          await loadCurrentSection();
          }
        })();
      } 
@@ -747,8 +734,9 @@ if (isIndexPage) {
         (async () => {
           const ratedSection = document.getElementById("rated-section");
           if (ratedSection) {
-            const ratedItems = await fetchRatedlist();
-            renderItems(ratedItems, ratedSection);
+            currentSection = saved;
+            await loadCurrentSection();
+            // renderItems(ratedItems, ratedSection);
           }
         })();
      }
@@ -790,66 +778,67 @@ if (isIndexPage) {
     document.getElementById("btnMovies").onclick = async () => {
       currentSection = "movies";
       currentPage = 1;
-      currentGenre = null;
 
       localStorage.setItem("activeSection", "movies");
       localStorage.setItem("currentPage", 1);
-      localStorage.removeItem("currentGenre");
 
       showSection("movie-section");
       setActiveNav("btnMovies");
       await loadCurrentSection();
+      updatePagination();
     };
 
     document.getElementById("btnTv").onclick = async () => {
       currentSection = "tv";
       currentPage = 1;
-      currentGenre = null;
 
       localStorage.setItem("activeSection", "tv");
       localStorage.setItem("currentPage", 1);
-      localStorage.removeItem("currentGenre");
       
       showSection("tv-section");
       setActiveNav("btnTv");
       await loadCurrentSection();
+      updatePagination();
     };
 
     document.getElementById("btnFavs").onclick = async () => {
         currentSection = "favorites"
         currentPage = 1;
+
         localStorage.setItem("activeSection", "favorites");
+        localStorage.setItem("currentPage", 1);
+
         showSection("fav-section");
         setActiveNav("btnFavs");
 
-        const favSection = document.getElementById("fav-section");
-        const favorites = await fetchFavorites();
-        renderItems(favorites, favSection);
+        await loadCurrentSection();
     }; 
 
     document.getElementById("btnList").onclick = async () => {
-      currentSection = "watchList"
+      currentSection = "watchlist"
       currentPage = 1;
+
       localStorage.setItem("activeSection", "watchlist");
+      localStorage.setItem("currentPage", 1);
+
       showSection("list-section");
       setActiveNav("btnList");
 
-      const listSection = document.getElementById("list-section");
-      const listItems = await fetchWatchlist();
-      renderItems(listItems, listSection);
+      await loadCurrentSection();
     };  
 
     document.getElementById("btnRated").onclick = async () => {
-      currentSection = "ratedList"
+      currentSection = "ratedlist"
       currentPage = 1;
+
       localStorage.setItem("activeSection", "ratedlist");
+      localStorage.setItem("currentPage", 1);
+
       showSection("rated-section");
       setActiveNav("btnRated");
 
-      const ratedSection = document.getElementById("rated-section");
-      const ratedItems = await fetchRatedlist();
-      renderItems(ratedItems, ratedSection);
-    }
+      await loadCurrentSection();
+    };
 
     document.getElementById("btnSearch").onclick = () => {
       localStorage.setItem("activeSection", "search");
@@ -1007,7 +996,7 @@ console.log("Parsed:", { movieId, type });
 if (!movieId || !type) {
   console.error("Missing movieId or type in URL");
   alert ("No Movie/Show data found. Redirecting to home.....");
-  window.location.href="imdex.html";
+  window.location.href="index.html";
   return;
 }
 
@@ -1420,7 +1409,6 @@ cast.cast?.slice(0, 20).forEach(actor => {
 //     `;
 //   })
 // }
-
 
 //render img
   imgSection.innerHTML = ""; 
