@@ -16,7 +16,10 @@ let movieGenreId = null;
 let tvGenreId = null;
 let selectedMovieGenres = null;
 let moviePage = 1;
-// const ITEMS_PER_PAGE = 20;
+const ITEMS_PER_PAGE = 20;
+let allFavorites = [];
+let allWatchlist = [];
+let allRated = [];
 
 function showToast(message, type="info") {
   const container = document.getElementById("toast-container");
@@ -559,7 +562,7 @@ function renderItems(list, container, type = "movies") {
 } 
 
 //favorites function
-    async function fetchFavorites(page = 1) {
+    async function fetchAllFavorites() {
       const sessionId = localStorage.getItem("session_id");
       const accountId = localStorage.getItem("account_id"); 
 
@@ -568,30 +571,63 @@ function renderItems(list, container, type = "movies") {
         return [];
       } 
 
-      const urlMovies=`${BASE_URL}/account/${accountId}/favorite/movies?api_key=${API_KEY}&&session_id=${sessionId}&page=${page}`; 
+      let allMovies = [];
+      let moviePage = 1;
+      let hasMoreMovies = true;
 
-      const urlTv=`${BASE_URL}/account/${accountId}/favorite/tv?api_key=${API_KEY}&&session_id=${sessionId}&page=${page}`; 
+      while (hasMoreMovies) {
+        const urlMovies = `${BASE_URL}/account/${accountId}/favorite/movies?api_key=${API_KEY}&session_id=${sessionId}&page=${moviePage}`;
+        const resMovies = await fetch(urlMovies);
+        const dataMovies = await resMovies.json();
 
-      const [resMovies, resTv] = await Promise.all([
-        fetch(urlMovies),
-        fetch(urlTv)
-      ]);
-      const dataMovies = await resMovies.json();
-      const dataTv = await resTv.json(); 
+        if (dataMovies.results && dataMovies.results.length > 0) {
+          allMovies.push(...dataMovies.results);
+          moviePage++;
+          hasMoreMovies = moviePage <= dataMovies.total_pages;
+        } else {
+          hasMoreMovies = false;
+        }
+      } 
 
-      console.log("Favorite Movies:", dataMovies);
-      console.log("Favorite TV:", dataTv);
+      let allTv = [];
+      let tvPage = 1;
+      let hasMoreTv = true; 
 
-     totalPages = Math.max(dataMovies.total_pages || 1, dataTv.total_pages || 1);
+      while(hasMoreTv) {
+        const urlTv = `${BASE_URL}/account/${accountId}/favorite/tv?api_key=${API_KEY}&session_id=${sessionId}&page=${tvPage}`;
+        const resTv = await fetch(urlTv);
+        const dataTv = await resTv.json();
 
-    return[
-    ...(dataMovies.results || []).map(m => ({ ...m, media_type: "movie"})),
-    ...(dataTv.results || []).map(t => ({ ...t, media_type: "tv"}))
-  ];
+        if (dataTv.results && dataTv.results.length > 0) {
+          allTv.push(...dataTv.results);
+          tvPage++;
+          hasMoreTv = tvPage <= dataTv.total_pages;
+        } else {
+          hasMoreTv = false;
+        }
+      } 
+
+      allFavorites = [
+        ...allMovies.map(m => ({ ...m, media_type: "movie"})),
+        ...allTv.map(t => ({ ...t, media_type: "tv"}))
+      ];
+
+      console.log("Total Favorites:", allFavorites.length);
+      return allFavorites;
 }  
 
+//Get favorites pagination
+function getFavorites(page = 1) {
+  const start = (page - 1) * ITEMS_PER_PAGE;
+  const end = start + ITEMS_PER_PAGE;
+
+  totalPages = Math.ceil(allFavorites.length / ITEMS_PER_PAGE);
+
+  return allFavorites.slice(start, end);
+}
+
 //watchlist function
-async function fetchWatchlist(page = 1) {
+async function fetchAllWatchlist() {
   const  sessionId = localStorage.getItem("session_id");
   const accountId = localStorage.getItem("account_id"); 
 
@@ -600,85 +636,169 @@ async function fetchWatchlist(page = 1) {
     return [];
   }
 
-  const urlMovies = `${BASE_URL}/account/${accountId}/watchlist/movies?api_key=${API_KEY}&&session_id=${sessionId}&page=${page}`;
+  let allMovies = [];
+  let moviePage = 1;
+  let hasMoreMovies = true;
 
-  const urlTv = `${BASE_URL}/account/${accountId}/watchlist/tv?api_key=${API_KEY}&&session_id=${sessionId}&page=${page}`;
-
-  const [resMovies, resTv] = await Promise.all([
-    fetch(urlMovies),
-    fetch(urlTv)
-  ]);
-
+  while (hasMoreMovies) {
+  const urlMovies = `${BASE_URL}/account/${accountId}/watchlist/movies?api_key=${API_KEY}&&session_id=${sessionId}&page=${moviePage}`;
+  const resMovies = await fetch(urlMovies);
   const dataMovies = await resMovies.json();
+
+  if (dataMovies.results && dataMovies.results.length > 0) {
+    allMovies.push(...dataMovies.results);
+    moviePage++;
+    hasMoreMovies = moviePage <= dataMovies.total_pages;
+  }else {
+    hasMoreMovies = false;
+  }
+  }
+  
+  let allTv = [];
+  let tvPage = 1;
+  let hasMoreTv = true;
+  
+  while (hasMoreTv) {
+  const urlTv = `${BASE_URL}/account/${accountId}/watchlist/tv?api_key=${API_KEY}&&session_id=${sessionId}&page=${tvPage}`;
+  const resTv = await fetch(urlTv);
   const dataTv = await resTv.json();
 
-  console.log("WatchList Movies:", dataMovies);
-  console.log("WatchList TV:", dataTv);
+  if (dataTv.results && dataTv.results.length > 0) {
+    allTv.push(...dataTv.results);
+    tvPage++;
+    hasMoreTv = tvPage <= dataTv.total_pages
+  } else {
+    hasMoreTv = false;
+  }
+  }
 
-  totalPages = Math.max(dataMovies.total_pages || 1, dataTv.total_pages || 1);
-
-  return[
-    ...(dataMovies.results || []).map(m => ({ ...m, media_type: "movie"})),
-    ...(dataTv.results || []).map(t => ({ ...t, media_type: "tv"}))
+  allWatchlist = [
+    ...allMovies.map(m => ({ ...m, media_type: "movie"})),
+    ...allTv.map(t => ({ ...t, media_type: "tv"}))
   ];
+
+  console.log("Total WatchList:", allWatchlist.length);
+  return allWatchlist;
+}
+
+//get watchlist pagination
+function getWatchlist(page = 1) {
+  const start = (page -1 ) * ITEMS_PER_PAGE;
+  const end = start + ITEMS_PER_PAGE;
+
+  totalPages = Math.ceil(allWatchlist.length / ITEMS_PER_PAGE);
+
+  return allWatchlist.slice(start, end);
 }
 
 //fetch rated items 
-async function fetchRatedlist(page =1) {
+async function fetchAllRatedlist() {
   const sessionId = localStorage.getItem("session_id");
   const accountId = localStorage.getItem("account_id");
   const guestSessionId = localStorage.getItem("guest_session_id");
 
-  if (sessionId && accountId) {
+  if (sessionId && accountId) { 
+
+    let allMovies = [];
+    let moviePage = 1;
+    let hasMoreMovies = true;
+
+    while (hasMoreMovies) {
     const urlMovies =
-      `${BASE_URL}/account/${accountId}/rated/movies?api_key=${API_KEY}&session_id=${sessionId}&page=${page}`;
+      `${BASE_URL}/account/${accountId}/rated/movies?api_key=${API_KEY}&session_id=${sessionId}&page=${moviePage}`;
+      const resMovies = await fetch(urlMovies);
+      const dataMovies = await resMovies.json();
+
+      if (dataMovies.results && dataMovies.results.length > 0) {
+        allMovies.push(...dataMovies.results);
+        moviePage++;
+        hasMoreMovies = moviePage <= dataMovies.total_pages;
+      }else {
+        hasMoreMovies = false;
+      }
+    } 
+
+    let allTv = [];
+    let tvPage = 1;
+    let hasMoreTv = true;
+
+    while (hasMoreTv) {
     const urlTv =
-      `${BASE_URL}/account/${accountId}/rated/tv?api_key=${API_KEY}&session_id=${sessionId}&page=${page}`;
-
-    const [resMovies, resTv] = await Promise.all([
-      fetch(urlMovies),
-      fetch(urlTv)
-    ]); 
-
-    const dataMovies = await resMovies.json();
+      `${BASE_URL}/account/${accountId}/rated/tv?api_key=${API_KEY}&session_id=${sessionId}&page=${tvPage}`;
+    const resTv = await fetch(urlTv);
     const dataTv = await resTv.json();
 
-     totalPages = Math.max(
-      dataMovies.total_pages || 1,
-      dataTv.total_pages || 1   
-    );
+    if (dataTv.results && dataTv.results.length > 0) {
+      allTv.push(...dataTv.results);
+      tvPage++;
+      hasMoreTv = tvPage <= dataTv.total_pages;
+    } else {
+      hasMoreTv = false;
+    }
+    }
 
-    return [
-      ...(dataMovies.results || []).map(m => ({ ...m, media_type: "movie" })),
-      ...(dataTv.results || []).map(t => ({ ...t, media_type: "tv" }))
+    allRated = [
+      ...allMovies.map(m => ({ ...m, media_type: "movie"})),
+      ...allTv.map(t => ({ ...t, media_type: "tv"}))
+    ];
+  } else if (guestSessionId) {
+
+    let allMovies = [];
+    let moviePage = 1;
+    let hasMoreMovies = true;
+
+    while (hasMoreMovies) {
+      const urlMovies =
+      `${BASE_URL}/guest_session/${guestSessionId}/rated/movies?api_key=${API_KEY}&page=${moviePage}`;
+      const resMovies = await fetch(urlMovies);
+      const dataMovies = await resMovies.json();
+
+      if (dataMovies.results && dataMovies.results.length > 0) {
+        allMovies.push(...dataMovies.results);
+        moviePage++;
+        hasMoreMovies = moviePage <= dataMovies.total_pages;
+      } else {
+        hasMoreMovies = false;
+      }
+    }
+
+    let allTv = [];
+    let tvPage = 1;
+    let hasMoreTv = true;
+    
+    while (hasMoreTv) {
+     const urlTv =
+      `${BASE_URL}/guest_session/${guestSessionId}/rated/tv?api_key=${API_KEY}&page=${moviePage}`;
+      const resTv = await fetch(urlTv);
+      const dataTv = await resTv.json();
+      
+      if (dataTv.results && dataTv.results.length > 0) {
+        allTv.push(...dataTv.results);
+        tvPage++;
+        hasMoreTv = tvPage <= dataTv.total_pages;
+      } else {
+        hasMoreTv = false;
+      }
+    } 
+
+    allRated = [
+      ...allMovies.map(m => ({ ...m, media_type: "movie"})),
+      ...allTv.map(t => ({ ...t, media_type: "tv"}))
     ];
   }
 
-  if (guestSessionId) {
-    const urlMovies =
-      `${BASE_URL}/guest_session/${guestSessionId}/rated/movies?api_key=${API_KEY}&page=${page}`;
-    const urlTv =
-      `${BASE_URL}/guest_session/${guestSessionId}/rated/tv?api_key=${API_KEY}&page=${page}`;
+  console.log("Total Rated:", allRated.length);
+  return allRated;
+} 
 
-    const [resMovies, resTv] = await Promise.all([
-      fetch(urlMovies),
-      fetch(urlTv)
-    ]);
+//get rated pagination 
+function getRated( page = 1 ) {
+  const start = ( page - 1 ) * ITEMS_PER_PAGE;
+  const end = start + ITEMS_PER_PAGE;
 
-    const dataMovies = await resMovies.json();
-    const dataTv = await resTv.json();
+  totalPages = Math.ceil(allRated.length / ITEMS_PER_PAGE);
 
-    totalPages = Math.max(
-      dataMovies.total_pages || 1,
-      dataTv.total_pages || 1   
-    );
-
-    return [
-      ...(dataMovies.results || []).map(m => ({ ...m, media_type: "movie" })),
-      ...(dataTv.results || []).map(t => ({ ...t, media_type: "tv" }))
-    ];
-  }
-
+  return allRated.slice( start, end );
 }
 
 
@@ -812,6 +932,7 @@ if (isIndexPage) {
     document.getElementById("btnFavs").onclick = async () => {
         currentSection = "favorites"
         currentPage = 1;
+        allFavorites = [];
 
         localStorage.setItem("activeSection", "favorites");
         localStorage.setItem("currentPage", 1);
@@ -825,6 +946,7 @@ if (isIndexPage) {
     document.getElementById("btnList").onclick = async () => {
       currentSection = "watchlist"
       currentPage = 1;
+      allWatchlist = [];
 
       localStorage.setItem("activeSection", "watchlist");
       localStorage.setItem("currentPage", 1);
@@ -838,6 +960,7 @@ if (isIndexPage) {
     document.getElementById("btnRated").onclick = async () => {
       currentSection = "ratedlist"
       currentPage = 1;
+      allRated = [];
 
       localStorage.setItem("activeSection", "ratedlist");
       localStorage.setItem("currentPage", 1);
@@ -932,17 +1055,26 @@ async function loadCurrentSection() {
       break;
 
     case "favorites":
-      data = await fetchFavorites(currentPage);
+      if (allFavorites.length === 0 || currentPage === 1 ) {
+        await fetchAllFavorites();
+      }
+      data = getFavorites(currentPage);
       renderItems(data, document.getElementById("fav-section"));
       break;
 
     case "watchlist":
-      data = await fetchWatchlist(currentPage);
+      if (allWatchlist.length === 0 || currentPage === 1) {
+        await fetchAllWatchlist();
+      }
+      data = getWatchlist(currentPage);
       renderItems(data, document.getElementById("list-section"));
       break;
 
     case "ratedlist":
-      data = await fetchRatedlist(currentPage);
+      if (allRated.length === 0 || currentPage === 1){
+        await fetchAllRatedlist();
+      }
+      data = getRated(currentPage);
       renderItems(data, document.getElementById("rated-section"));
       break;
   }
