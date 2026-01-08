@@ -474,13 +474,6 @@ if (searchInput && suggestionsList) {
   });
 }
 
-// function paginateArray(items, page) {
-//   const start = (page - 1) * ITEMS_PER_PAGE;
-//   const end = start + ITEMS_PER_PAGE;
-//   return items.slice(start, end);
-// }
-
-
 function updatePagination() {
   const pagination = document.getElementById("pagination");
   const pageInfo = document.getElementById("pageInfo");
@@ -1111,25 +1104,6 @@ if (hash) {
     movieId = parts[1];
   }
 }
-
-// console.log("Parsed:", { movieId, type });
-  
-// if (!movieId || !type) {
-//   const match = window.location.pathname.match(
-//     /^\/details\/(movie|tv)\/(\d+)$/
-//   );
-
-//   if (match) {
-//     type = match[1];
-//     movieId = match[2];
-//   }
-// }
-
-// if (!movieId || !type) {
-//   const params = new URLSearchParams(window.location.search);
-//   movieId = params.get("id");
-//   type = params.get("type");
-// }
 
 console.log("Parsed:", { movieId, type });
 
