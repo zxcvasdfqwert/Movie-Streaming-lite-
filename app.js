@@ -272,16 +272,19 @@ async function setupMovieGenres() {
     select.appendChild(option);
   });
 
-  select.value = currentGenre || "";
+  const savedMovieGenre = localStorage.getItem("movieGenreId");
+  if (savedMovieGenre) {
+    movieGenreId = savedMovieGenre;
+    select.value = savedMovieGenre;
+  }
 
   select.addEventListener("change", async (e) => {
-    currentGenre = e.target.value || null;
-    localStorage.setItem("currentGenre", currentGenre);
+    movieGenreId = e.target.value || null;
+    localStorage.setItem("movieGenreId", movieGenreId || "");
     currentSection = "movies";
     currentPage = 1;  
 
     localStorage.setItem("currentPage", 1);
-    localStorage.setItem("currentGenre", currentGenre);
 
     await loadCurrentSection();
   });
@@ -302,16 +305,19 @@ async function setupTvGenres() {
     select.appendChild(option);
   });
 
-  select.value = currentGenre || "";
+  const savedTvGenre = localStorage.getItem("tvGenreId");
+  if (savedTvGenre) {
+    tvGenreId = savedTvGenre;
+    select.value = savedTvGenre;
+  }
 
   select.addEventListener("change", async (e) => {
-    currentGenre = e.target.value || null;
-    localStorage.setItem("currentGenre", currentGenre);
+    tvGenreId = e.target.value || null;
+    localStorage.setItem("tvGenreId", tvGenreId || "");
     currentSection = "tv";
     currentPage = 1;
 
     localStorage.setItem("currentPage", 1);
-    localStorage.setItem("currentGenre", currentGenre);
 
     await loadCurrentSection();
   })
@@ -679,12 +685,14 @@ async function fetchRatedlist(page =1) {
 if (isIndexPage) { 
 
     const saved = localStorage.getItem("activeSection"); 
-
     const savedPage = Number(localStorage.getItem("currentPage")) || 1;
-    const savedGenre = localStorage.getItem("currentGenre");
+
+    const savedMovieGenre = localStorage.getItem("movieGenreId");
+    const savedTvGenre = localStorage.getItem("tvGenreId");
 
     currentPage = savedPage;
-    currentGenre = savedGenre ? Number(savedGenre) : null;
+    movieGenreId = savedMovieGenre || null;
+    tvGenreId = savedTvGenre || null;
 
     if (saved) {
       switch (saved) {
@@ -910,15 +918,15 @@ async function loadCurrentSection() {
 
   switch (currentSection) {
     case "movies":
-      data = currentGenre
-      ? await fetchMoviesByGenres(currentGenre, currentPage)
+      data = movieGenreId
+      ? await fetchMoviesByGenres(movieGenreId, currentPage)
       : await fetchPopular(currentPage);
       renderItems(data, movieGrid, "movie");
       break;
 
     case "tv":
-      data = currentGenre
-        ? await fetchTvByGenres(currentGenre, currentPage)
+      data = tvGenreId
+        ? await fetchTvByGenres(tvGenreId, currentPage)
         : await fetchPopularTv(currentPage);
       renderItems(data, tvGrid, "tv");
       break;
