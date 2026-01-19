@@ -399,55 +399,55 @@ const searchInput = document.getElementById("searchInput");
 const suggestionsList = document.getElementById("suggestions-list");
 
 
-// function debounce(func, delay) {
-//   let timeoutId;
-//   return function (...args) {
-//     clearTimeout(timeoutId);
-//     timeoutId = setTimeout(() => func.apply(this, args), delay);
-//   };
-// }
+function debounce(func, delay) {
+  let timeoutId;
+  return function (...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func.apply(this, args), delay);
+  };
+}
 
-// async function fetchSuggestion(query) {
-//   if (!query) return [];
-//   const url = `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}`;
-//   const res = await fetch(url, options);
-//   if (!res.ok) return [];
-//   const data = await res.json();
-//   return (data.results || []).filter(item => item.poster_path || item.profile_path).slice(0, 4);
-// }
+async function fetchSuggestion(query) {
+  if (!query) return [];
+  const url = `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}`;
+  const res = await fetch(url, options);
+  if (!res.ok) return [];
+  const data = await res.json();
+  return (data.results || []).filter(item => item.poster_path || item.profile_path).slice(0, 4);
+}
 
-// const handleSuggestionInput = debounce(async (e) => {
-//   const query = e.target.value.trim();
-//   if (!query) {
-//     suggestionsList.innerHTML = "";
-//     suggestionsList.style.display = "none";
-//     return;
-//   }
-//   const suggestions = await fetchSuggestion(query);
-//   suggestionsList.innerHTML = suggestions
-//     .map(item => `
-//       <li class="suggestion-item" data-id="${item.id}" data-type="${item.media_type || 'movie'}">
-//         <span class="suggestion-title">${item.title || item.name || 'Unknown'}</span>
-//       </li>
-//     `)
-//     .join("");
+const handleSuggestionInput = debounce(async (e) => {
+  const query = e.target.value.trim();
+  if (!query) {
+    suggestionsList.innerHTML = "";
+    suggestionsList.style.display = "none";
+    return;
+  }
+  const suggestions = await fetchSuggestion(query);
+  suggestionsList.innerHTML = suggestions
+    .map(item => `
+      <li class="suggestion-item" data-id="${item.id}" data-type="${item.media_type || 'movie'}">
+        <span class="suggestion-title">${item.title || item.name || 'Unknown'}</span>
+      </li>
+    `)
+    .join("");
   
-//   if (suggestions.length > 0) {
-//     suggestionsList.style.display = "block";
-//   }
+  if (suggestions.length > 0) {
+    suggestionsList.style.display = "block";
+  }
 
-//   document.querySelectorAll(".suggestion-item").forEach(li => {
-//     li.addEventListener("click", () => {
-//       const id = li.dataset.id;
-//       const type = li.dataset.type || "movie";
-//       searchInput.value = li.querySelector(".suggestion-title").textContent;
-//       const fakeEvent = new Event('submit', { cancelable: true });
-//       handleSearch(fakeEvent);
-//       suggestionsList.innerHTML = "";
-//       suggestionsList.style.display = "none";
-//     });
-//   });
-// }, 500);
+  document.querySelectorAll(".suggestion-item").forEach(li => {
+    li.addEventListener("click", () => {
+      const id = li.dataset.id;
+      const type = li.dataset.type || "movie";
+      searchInput.value = li.querySelector(".suggestion-title").textContent;
+      const fakeEvent = new Event('submit', { cancelable: true });
+      handleSearch(fakeEvent);
+      suggestionsList.innerHTML = "";
+      suggestionsList.style.display = "none";
+    });
+  });
+}, 500);
 
 if (searchInput && suggestionsList) {
   searchInput.addEventListener("keydown", function(event) {
@@ -458,7 +458,7 @@ if (searchInput && suggestionsList) {
   }
 });
 
-  // searchInput.addEventListener("input", handleSuggestionInput);
+  searchInput.addEventListener("input", handleSuggestionInput);
   
   searchInput.addEventListener("focus", () => {
     const query = searchInput.value.trim();
