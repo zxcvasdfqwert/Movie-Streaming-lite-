@@ -1143,13 +1143,13 @@ async function fetchCast(type, id) {
     return res.json();
 } 
 
-// async function fetchReviews(type, id) {
-//   const url = `${BASE_URL}/${type}/${id}/reviews?api_key=${API_KEY}`;
-//   console.log("Reviews URL:", url);
-//   const res = await fetch(url);
-//   const data = await res.json();
-//   return data.results || [];
-// }
+async function fetchReviews(type, id) {
+  const url = `${BASE_URL}/${type}/${id}/reviews?api_key=${API_KEY}`;
+  console.log("Reviews URL:", url);
+  const res = await fetch(url);
+  const data = await res.json();
+  return data.results || [];
+}
 
 async function fetchImages(type, id) {
   const url = `${BASE_URL}/${type}/${id}/images?api_key=${API_KEY}`;
@@ -1218,7 +1218,7 @@ async function render() {
   const details = await fetchDetails(type, movieId);
   const streaming = await fetchPlatforms(type, movieId);
   const cast = await fetchCast(type, movieId);
-  // const reviews = await fetchReviews(type, movieId);
+  const reviews = await fetchReviews(type, movieId);
   const images = await fetchImages(type, movieId);
   const related = await fetchRelated(type, movieId);
   const certification = await fetchCertification(type, movieId);
@@ -1510,19 +1510,27 @@ cast.cast?.slice(0, 20).forEach(actor => {
 });
 
 // render reviews 
-//   reviewSection.innerHTML = "";
-//   if (!reviews || reviews.length === 0) {
-//     reviewSection.innerHTML = `<p>No reviews   Available..</p>`;
-//   } else {
-//   reviews.forEach(r => {
-//     reviewSection.innerHTML = `
-//     <div class="review-card">
-//       <h2>${r.author}</h2>
-//       <p>$${r.content}</p>
-//     </div>
-//     `;
-//   })
-// }
+  const reviewSlider = document.getElementById("review-slider");
+  reviewSlider.innerHTML ="";
+
+  if (!reviews || reviews.length === 0) {
+    reviewSlider.innerHTML = `<p style="padding:10px;">No reviews available</p>`;
+    return;
+  }
+
+  reviews.slice(0, 20).forEach(review => {
+    const card = document.createElement("div");
+    card.className = "review-card";
+
+    card.innerHTML = `
+    <h4>${review.author}</h4>
+    <div class="review-content">
+      ${review.content}
+    </div>
+    `;
+
+    reviewSlider.appendChild(card);
+  })
 
 //render img
   imgSection.innerHTML = ""; 
