@@ -675,4 +675,56 @@ nav button.active {
 
 .pagination button {
   padding: 6px 14px;
+} 
+
+.review-slider {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 10px 0;
+}
+
+.review-slider::-webkit-scrollbar {
+  height: 8px;
+}
+
+.review-slider::-webkit-scrollbar-thumb {
+   background: #555;
+   border-radius: 4px
+}
+
+.review-card{
+  min-width: 300px;
+  max-width: 300px;
+  height: 200px;
+  background: #1c1c1c;
+  border-radius: 12px;
+  padding: 12px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+.review-card h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #f5c518;
+}
+
+.review-content {
+  font-size: 13px;
+  line-height: 1.4;
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 6px;
+}
+
+.review-content::-webkit-scrollbar {
+  width: 5px;
+}
+
+.review-content::-webkit-scrollbar-thumb {
+  background: #777;
+  border-radius: 4px;
 }
