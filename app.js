@@ -35,7 +35,7 @@ function showToast(message, type="info") {
     toast.remove();
   }, 2000);
 }
-
+   
 
 function getAuthContext() {
   return {
